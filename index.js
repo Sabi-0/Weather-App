@@ -6,12 +6,11 @@ let weatherChart = null; // Variable para almacenar la instancia del gráfico
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
 
-  const apiKey = "d49f768bd5ea4f249972455f214cadfe";
+  const apiKey = "b53935ed062d87ea3208581c9519246c";
   const cityInput = document.getElementById("cityInput").value.trim();
 
   if (!cityInput) {
-    resultDiv.innerHTML =
-      '<div class="alert alert-danger">Please enter at least one city name!</div>';
+    showError("Please enter at least one city name!");
     return;
   }
 
@@ -19,9 +18,9 @@ form.addEventListener("submit", async (event) => {
     .split(",")
     .map((city) => city.trim())
     .filter((city) => city !== "");
+
   if (cities.length === 0) {
-    resultDiv.innerHTML =
-      '<div class="alert alert-danger">Invalid input. Please enter valid city names.</div>';
+    showError("Invalid input. Please enter valid city names.");
     return;
   }
 
@@ -38,6 +37,7 @@ form.addEventListener("submit", async (event) => {
     });
 
     const weatherData = await Promise.allSettled(weatherPromises);
+
     const validCities = [];
     const temperatures = [];
     const cityCards = weatherData.map((result, index) => {
@@ -60,20 +60,27 @@ form.addEventListener("submit", async (event) => {
       }
     });
 
-
-    resultDiv.innerHTML = cityCards.join("");
-    if (validCities.length > 0) {
+    if (validCities.length === 0) {
+      showError("No valid cities found. Please check your input.");
+    } else {
+      resultDiv.innerHTML = cityCards.join("");
       updateChart(validCities, temperatures);
     }
   } catch (error) {
-    resultDiv.innerHTML = `<div class="alert alert-danger">An error occurred while fetching weather data.</div>`;
+    showError(
+      "An error occurred while fetching weather data. Please try again."
+    );
   }
 });
 
-//barras
+function showError(message) {
+  resultDiv.innerHTML = `<div class="alert alert-danger">${message}</div>`;
+  clearChart(); // Limpiar gráfico si hay error
+}
+
 function updateChart(cities, temperatures) {
   if (weatherChart) {
-    weatherChart.destroy(); 
+    weatherChart.destroy(); // Destruir gráfico anterior
   }
 
   weatherChart = new Chart(chartCanvas, {
@@ -99,6 +106,14 @@ function updateChart(cities, temperatures) {
       },
     },
   });
+}
+
+// limpiar el gráfico cuando hay errores
+function clearChart() {
+  if (weatherChart) {
+    weatherChart.destroy();
+    weatherChart = null;
+  }
 }
 
 // Función para generar colores aleatorios
